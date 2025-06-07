@@ -1,5 +1,5 @@
 // Trello Power-Up initialization
-TrelloPowerUp.initialize({
+window.TrelloPowerUp.initialize({
   // Add button to board header
   'board-buttons': function(t, options) {
     return [{

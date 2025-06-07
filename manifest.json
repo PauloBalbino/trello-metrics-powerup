@@ -8,9 +8,5 @@
     "card-detail-badges",
     "show-settings"
   ],
-  "connectors": {
-    "iframe": {
-      "url": "./index.html"
-    }
-  }
+  "connectors": {}
 }

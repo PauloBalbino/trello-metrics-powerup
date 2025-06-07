@@ -144,32 +144,49 @@
         });
         
         async function loadCardMetrics() {
-            // Get workflow config
-            const config = await t.get('board', 'shared', 'workflowConfig', {});
-            
-            if (!config.startLists || !config.doneLists) {
-                showError('Please configure your workflow settings first from the board menu.');
-                return;
+            try {
+                // Get workflow config
+                const config = await t.get('board', 'shared', 'workflowConfig', {});
+                
+                if (!config.startLists || !config.doneLists) {
+                    showError('Please configure your workflow settings first from the board menu.');
+                    return;
+                }
+                
+                // Get card info
+                const card = await t.card('id', 'name', 'idList');
+                
+                // Get current list name
+                const lists = await t.lists('id', 'name');
+                const currentList = lists.find(l => l.id === card.idList);
+                
+                // Try to get stored card metrics first
+                let actions = await t.get('card', 'shared', 'actions', []);
+                
+                // If no stored actions, show message about needing to authorize
+                if (!actions || actions.length === 0) {
+                    showError('No movement history available. This card may not have moved between lists yet, or you may need to authorize the Power-Up to access card history.');
+                    
+                    // Show basic info without history
+                    displayCardMetrics(card, {
+                        leadTimeDays: null,
+                        cycleTimeDays: null,
+                        isCompleted: config.doneLists.includes(card.idList),
+                        movements: []
+                    }, currentList);
+                    return;
+                }
+                
+                // Calculate metrics
+                const metrics = calculateDetailedCardMetrics(card, actions, config, lists);
+                
+                // Display results
+                displayCardMetrics(card, metrics, currentList);
+                
+            } catch (error) {
+                console.error('Error in loadCardMetrics:', error);
+                showError('Failed to load card metrics: ' + error.message);
             }
-            
-            // Get card info
-            const card = await t.card('id', 'name', 'idList');
-            
-            // Get current list name
-            const lists = await t.lists('id', 'name');
-            const currentList = lists.find(l => l.id === card.idList);
-            
-            // Get card actions - use the REST API
-            const actions = await t.rest('GET', `/1/cards/${card.id}/actions`, {
-                filter: 'updateCard:idList',
-                limit: 100
-            });
-            
-            // Calculate metrics
-            const metrics = calculateDetailedCardMetrics(card, actions, config, lists);
-            
-            // Display results
-            displayCardMetrics(card, metrics, currentList);
         }
         
         function calculateDetailedCardMetrics(card, actions, config, lists) {

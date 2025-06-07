@@ -1,0 +1,20 @@
+{
+  "name": "Lead & Cycle Time Metrics",
+  "details": "Calculate lead time and cycle time for cards based on movement history",
+  "author": "Paulo",
+  "version": "1.0.0",
+  "icon": {
+    "url": "./icon.png"
+  },
+  "capabilities": [
+    "board-buttons",
+    "card-buttons",
+    "card-detail-badges",
+    "show-settings"
+  ],
+  "connectors": {
+    "iframe": {
+      "url": "./power-up.html"
+    }
+  }
+}

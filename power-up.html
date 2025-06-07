@@ -157,8 +157,8 @@
                 <select id="doneLists" multiple size="3"></select>
             </div>
             
-            <button onclick="saveSettings()">Save Configuration</button>
-            <button onclick="showMetrics()" style="margin-left: 10px;">View Metrics</button>
+            <button id="saveSettingsBtn">Save Configuration</button>
+            <button id="viewMetricsBtn" style="margin-left: 10px;">View Metrics</button>
         </div>
         
         <div id="metrics" style="display: none;">
@@ -492,6 +492,12 @@
             errorDiv.style.display = 'block';
             document.getElementById('loading').style.display = 'none';
         }
+        
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+            document.getElementById('viewMetricsBtn').addEventListener('click', showMetrics);
+        });
         
         // Initialize iframe
         TrelloPowerUp.iframe();

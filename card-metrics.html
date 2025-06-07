@@ -159,8 +159,8 @@
             const lists = await t.lists('id', 'name');
             const currentList = lists.find(l => l.id === card.idList);
             
-            // Get card actions
-            const actions = await t.card('id', card.id).get('actions', {
+            // Get card actions - use the REST API
+            const actions = await t.rest('GET', `/1/cards/${card.id}/actions`, {
                 filter: 'updateCard:idList',
                 limit: 100
             });

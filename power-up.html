@@ -92,6 +92,11 @@
                 <select id="doneLists" multiple size="3"></select>
             </div>
             
+            <div class="form-group">
+                <label>Trello API Key (get from <a href="https://trello.com/app-key" target="_blank">https://trello.com/app-key</a>):</label>
+                <input type="text" id="apiKey" placeholder="Enter your Trello API key" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
             <button id="saveSettingsBtn">Save Configuration</button>
         </div>
     </div>
@@ -113,11 +118,15 @@
             
             // Get existing config
             const config = await t.get('board', 'shared', 'workflowConfig', {});
+            const apiKey = await t.get('board', 'shared', 'apiKey', '');
             
             // Populate list dropdowns
             populateListSelect('startLists', lists, config.startLists || []);
             populateListSelect('progressLists', lists, config.progressLists || []);
             populateListSelect('doneLists', lists, config.doneLists || []);
+            
+            // Populate API key
+            document.getElementById('apiKey').value = apiKey;
             
             document.getElementById('loading').style.display = 'none';
             document.getElementById('settings').style.display = 'block';
@@ -141,6 +150,7 @@
                 const startLists = Array.from(document.getElementById('startLists').selectedOptions).map(o => o.value);
                 const progressLists = Array.from(document.getElementById('progressLists').selectedOptions).map(o => o.value);
                 const doneLists = Array.from(document.getElementById('doneLists').selectedOptions).map(o => o.value);
+                const apiKey = document.getElementById('apiKey').value.trim();
                 
                 const config = {
                     startLists,
@@ -149,6 +159,11 @@
                 };
                 
                 await t.set('board', 'shared', 'workflowConfig', config);
+                
+                // Save API key separately
+                if (apiKey) {
+                    await t.set('board', 'shared', 'apiKey', apiKey);
+                }
                 
                 // Close popup
                 t.closePopup();

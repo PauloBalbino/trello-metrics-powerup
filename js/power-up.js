@@ -74,6 +74,25 @@ window.TrelloPowerUp.initialize({
       url: './power-up.html',
       height: 600
     });
+  },
+
+  // Authorization status - check if user has authorized
+  'authorization-status': function(t, options) {
+    return t.get('member', 'private', 'token')
+      .then(function(token) {
+        return { authorized: !!token };
+      })
+      .catch(function() {
+        return { authorized: false };
+      });
+  },
+
+  // Authorization URL - where to send user to authorize
+  'authorize-url': function(t, options) {
+    return 'https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=' + 
+           encodeURIComponent('Lead & Cycle Time Metrics') + 
+           '&callback_method=postMessage&return_url=' + 
+           encodeURIComponent(window.location.origin);
   }
 });
 

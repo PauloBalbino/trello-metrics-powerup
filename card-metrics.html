@@ -104,20 +104,63 @@
                 const lists = await t.lists('id', 'name');
                 const currentList = lists.find(l => l.id === card.idList);
                 
-                // Determine current status based on list position
+                // Try to get card actions with authorization
+                let actions = [];
+                let needsAuth = false;
+                
+                try {
+                    // Check if user is authorized
+                    const token = await t.get('member', 'private', 'token');
+                    
+                    if (token) {
+                        // User is authorized - get card actions
+                        console.log('User is authorized, fetching card actions...');
+                        const response = await fetch(`https://api.trello.com/1/cards/${card.id}/actions?filter=updateCard:idList&limit=50&token=${token}&key=d53c86921e0d2d2ec3f1678f8e5e1c39`);
+                        
+                        if (response.ok) {
+                            actions = await response.json();
+                            console.log('Got card actions:', actions);
+                        } else {
+                            console.error('API request failed:', response.status, response.statusText);
+                        }
+                    } else {
+                        needsAuth = true;
+                    }
+                } catch (error) {
+                    console.error('Error getting actions:', error);
+                    needsAuth = true;
+                }
+                
+                // Calculate metrics
+                let leadTimeDays = null;
+                let cycleTimeDays = null;
                 let currentStatus = 'In Progress';
+                
                 if (config.startLists && config.startLists.includes(card.idList)) {
                     currentStatus = 'Not Started';
                 } else if (config.doneLists && config.doneLists.includes(card.idList)) {
                     currentStatus = 'Completed';
                 }
                 
-                // Display basic card info (no historical data yet)
+                if (actions.length > 0) {
+                    // Calculate actual metrics from movement history
+                    const metrics = calculateMetricsFromActions(actions, config);
+                    leadTimeDays = metrics.leadTimeDays;
+                    cycleTimeDays = metrics.cycleTimeDays;
+                    if (metrics.isCompleted) currentStatus = 'Completed';
+                }
+                
+                // Display results
                 document.getElementById('cardName').textContent = card.name;
-                document.getElementById('leadTime').textContent = 'Not available yet';
-                document.getElementById('cycleTime').textContent = 'Not available yet';
+                document.getElementById('leadTime').textContent = leadTimeDays ? `${leadTimeDays.toFixed(1)} days` : (needsAuth ? 'Authorize to see' : 'No data');
+                document.getElementById('cycleTime').textContent = cycleTimeDays ? `${cycleTimeDays.toFixed(1)} days` : (needsAuth ? 'Authorize to see' : 'No data');
                 document.getElementById('status').textContent = currentStatus;
                 document.getElementById('currentList').textContent = currentList ? currentList.name : 'Unknown';
+                
+                // Show authorization button if needed
+                if (needsAuth) {
+                    showAuthButton();
+                }
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
@@ -126,6 +169,80 @@
                 console.error('Error in loadCardMetrics:', error);
                 showError('Failed to load card metrics: ' + error.message);
             }
+        }
+        
+        function calculateMetricsFromActions(actions, config) {
+            if (!actions || actions.length === 0) {
+                return { leadTimeDays: null, cycleTimeDays: null, isCompleted: false };
+            }
+            
+            // Sort actions by date (oldest first)
+            const movements = actions
+                .filter(action => action.type === 'updateCard' && action.data.listAfter)
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .map(action => ({
+                    date: action.date,
+                    toListId: action.data.listAfter.id
+                }));
+            
+            if (movements.length === 0) {
+                return { leadTimeDays: null, cycleTimeDays: null, isCompleted: false };
+            }
+            
+            // Find key dates
+            let workflowStart = null;
+            let workStart = null;
+            let completion = null;
+            let isCompleted = false;
+            
+            for (const movement of movements) {
+                if (!workflowStart && config.startLists.includes(movement.toListId)) {
+                    workflowStart = new Date(movement.date);
+                }
+                if (!workStart && config.progressLists && config.progressLists.includes(movement.toListId)) {
+                    workStart = new Date(movement.date);
+                }
+                if (config.doneLists.includes(movement.toListId)) {
+                    completion = new Date(movement.date);
+                    isCompleted = true;
+                    break;
+                }
+            }
+            
+            // Calculate times in days
+            let leadTimeDays = null;
+            let cycleTimeDays = null;
+            
+            if (workflowStart && completion) {
+                leadTimeDays = (completion - workflowStart) / (1000 * 60 * 60 * 24);
+            }
+            
+            if (workStart && completion) {
+                cycleTimeDays = (completion - workStart) / (1000 * 60 * 60 * 24);
+            }
+            
+            return { leadTimeDays, cycleTimeDays, isCompleted };
+        }
+        
+        function showAuthButton() {
+            const authButton = document.createElement('button');
+            authButton.textContent = 'Authorize to see timing data';
+            authButton.style.margin = '10px 0';
+            authButton.onclick = function() {
+                t.authorize({
+                    scope: { read: true }
+                }).then(function(token) {
+                    // Store token and reload
+                    return t.set('member', 'private', 'token', token);
+                }).then(function() {
+                    window.location.reload();
+                }).catch(function(error) {
+                    console.error('Authorization failed:', error);
+                    showError('Authorization failed. Please try again.');
+                });
+            };
+            
+            document.getElementById('content').appendChild(authButton);
         }
         
         function showError(message) {

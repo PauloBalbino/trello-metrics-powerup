@@ -4,9 +4,11 @@
   "author": "Paulo",
   "capabilities": [
     "board-buttons",
-    "card-buttons",
+    "card-buttons", 
     "card-detail-badges",
-    "show-settings"
+    "show-settings",
+    "authorization-status",
+    "authorize-url"
   ],
   "connectors": {}
 }

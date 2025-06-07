@@ -185,8 +185,8 @@
                 <div id="cardList"></div>
             </div>
             
-            <button onclick="showSettings()">Configure Workflow</button>
-            <button onclick="refreshMetrics()" style="margin-left: 10px;">Refresh</button>
+            <button id="configureBtn">Configure Workflow</button>
+            <button id="refreshBtn" style="margin-left: 10px;">Refresh</button>
         </div>
     </div>
 
@@ -497,6 +497,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
             document.getElementById('viewMetricsBtn').addEventListener('click', showMetrics);
+            document.getElementById('configureBtn').addEventListener('click', showSettings);
+            document.getElementById('refreshBtn').addEventListener('click', refreshMetrics);
         });
         
         // Initialize iframe

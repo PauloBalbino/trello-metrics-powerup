@@ -193,13 +193,6 @@
                     isCompleted: config.doneLists && config.doneLists.includes(card.idList),
                     movements: mockMovements
                 }, currentList);
-                return;
-                
-                // Calculate metrics
-                const metrics = calculateDetailedCardMetrics(card, actions, config, lists);
-                
-                // Display results
-                displayCardMetrics(card, metrics, currentList);
                 
             } catch (error) {
                 console.error('Error in loadCardMetrics:', error);

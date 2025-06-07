@@ -160,62 +160,40 @@
                 const lists = await t.lists('id', 'name');
                 const currentList = lists.find(l => l.id === card.idList);
                 
-                // Try to get card actions using different approaches
-                let actions = [];
+                // For now, show current card status without historical data
+                // TODO: Implement proper action history retrieval
+                console.log('Card info:', card);
+                console.log('Current list:', currentList);
+                console.log('Config:', config);
                 
-                try {
-                    // Method 1: Try direct REST API call
-                    console.log('Trying to get actions for card:', card.id);
-                    actions = await t.rest('GET', `/1/cards/${card.id}/actions`, {
-                        filter: 'updateCard:idList',
-                        limit: 50
-                    });
-                    console.log('Got actions:', actions);
-                } catch (restError) {
-                    console.log('REST API failed:', restError);
-                    
-                    try {
-                        // Method 2: Try with authorization
-                        console.log('Trying with authorization...');
-                        await t.authorize('https://api.trello.com/1/authorize', {
-                            type: 'popup',
-                            name: 'Lead & Cycle Time Metrics',
-                            scope: { read: true },
-                            expiration: 'never'
-                        });
-                        
-                        // Retry after authorization
-                        actions = await t.rest('GET', `/1/cards/${card.id}/actions`, {
-                            filter: 'updateCard:idList',
-                            limit: 50
-                        });
-                        console.log('Got actions after auth:', actions);
-                    } catch (authError) {
-                        console.log('Authorization failed:', authError);
-                        
-                        // Method 3: Show message and basic info without history
-                        showError('Cannot access card movement history. This may require additional permissions or the card may not have moved between lists yet.');
-                        
-                        displayCardMetrics(card, {
-                            leadTimeDays: null,
-                            cycleTimeDays: null,
-                            isCompleted: config.doneLists.includes(card.idList),
-                            movements: []
-                        }, currentList);
-                        return;
-                    }
+                // Show current status and explain limitation
+                showError('Card movement history is not yet available. Currently showing card status based on current list position only.');
+                
+                // Determine current status based on list position
+                let currentStatus = 'other';
+                if (config.startLists && config.startLists.includes(card.idList)) {
+                    currentStatus = 'start';
+                } else if (config.progressLists && config.progressLists.includes(card.idList)) {
+                    currentStatus = 'progress';
+                } else if (config.doneLists && config.doneLists.includes(card.idList)) {
+                    currentStatus = 'done';
                 }
                 
-                if (!actions || actions.length === 0) {
-                    console.log('No actions found');
-                    displayCardMetrics(card, {
-                        leadTimeDays: null,
-                        cycleTimeDays: null,
-                        isCompleted: config.doneLists.includes(card.idList),
-                        movements: []
-                    }, currentList);
-                    return;
-                }
+                // Create a mock movement for current position
+                const mockMovements = [{
+                    date: new Date().toISOString(),
+                    listId: card.idList,
+                    listName: currentList ? currentList.name : 'Unknown',
+                    type: currentStatus
+                }];
+                
+                displayCardMetrics(card, {
+                    leadTimeDays: null,
+                    cycleTimeDays: null,
+                    isCompleted: config.doneLists && config.doneLists.includes(card.idList),
+                    movements: mockMovements
+                }, currentList);
+                return;
                 
                 // Calculate metrics
                 const metrics = calculateDetailedCardMetrics(card, actions, config, lists);

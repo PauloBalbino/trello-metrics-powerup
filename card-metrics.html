@@ -153,8 +153,28 @@
                     return;
                 }
                 
-                // Get card info
-                const card = await t.card('id', 'name', 'idList');
+                // Test different card fields to see what's available
+                try {
+                    const basicCard = await t.card('id', 'name', 'idList', 'desc', 'url', 'shortUrl');
+                    console.log('Basic card data:', basicCard);
+                    
+                    const cardWithDates = await t.card('id', 'name', 'idList', 'dateLastActivity', 'due', 'start');
+                    console.log('Card with dates:', cardWithDates);
+                    
+                    const cardWithMembers = await t.card('id', 'name', 'idMembers', 'labels', 'pos');
+                    console.log('Card with members/labels:', cardWithMembers);
+                    
+                    // Try getting all available fields
+                    const allCard = await t.card('all');
+                    console.log('ALL CARD DATA:', allCard);
+                    
+                    // Use basic card for the rest of the function
+                    const card = basicCard;
+                } catch (error) {
+                    console.error('Error getting extended card data:', error);
+                    // Fallback to basic card info
+                    var card = await t.card('id', 'name', 'idList');
+                }
                 
                 // Get current list name
                 const lists = await t.lists('id', 'name');

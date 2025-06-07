@@ -16,5 +16,6 @@
     "iframe": {
       "url": "./power-up.html"
     }
-  }
+  },
+  "js": "./power-up.js"
 }

@@ -3,7 +3,6 @@ TrelloPowerUp.initialize({
   // Add button to board header
   'board-buttons': function(t, options) {
     return [{
-      icon: 'https://cdn.glitch.com/2442c68d-7b6d-4b69-9d13-feab530aa88e%2Fstats.svg',
       text: 'Lead & Cycle Times',
       callback: function(t) {
         return t.popup({
@@ -57,7 +56,6 @@ TrelloPowerUp.initialize({
   // Add button to individual cards
   'card-buttons': function(t, options) {
     return [{
-      icon: 'https://cdn.glitch.com/2442c68d-7b6d-4b69-9d13-feab530aa88e%2Fclock.svg',
       text: 'View Metrics',
       callback: function(t) {
         return t.popup({

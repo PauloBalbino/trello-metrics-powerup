@@ -160,14 +160,54 @@
                 const lists = await t.lists('id', 'name');
                 const currentList = lists.find(l => l.id === card.idList);
                 
-                // Try to get stored card metrics first
-                let actions = await t.get('card', 'shared', 'actions', []);
+                // Try to get card actions using different approaches
+                let actions = [];
                 
-                // If no stored actions, show message about needing to authorize
-                if (!actions || actions.length === 0) {
-                    showError('No movement history available. This card may not have moved between lists yet, or you may need to authorize the Power-Up to access card history.');
+                try {
+                    // Method 1: Try direct REST API call
+                    console.log('Trying to get actions for card:', card.id);
+                    actions = await t.rest('GET', `/1/cards/${card.id}/actions`, {
+                        filter: 'updateCard:idList',
+                        limit: 50
+                    });
+                    console.log('Got actions:', actions);
+                } catch (restError) {
+                    console.log('REST API failed:', restError);
                     
-                    // Show basic info without history
+                    try {
+                        // Method 2: Try with authorization
+                        console.log('Trying with authorization...');
+                        await t.authorize('https://api.trello.com/1/authorize', {
+                            type: 'popup',
+                            name: 'Lead & Cycle Time Metrics',
+                            scope: { read: true },
+                            expiration: 'never'
+                        });
+                        
+                        // Retry after authorization
+                        actions = await t.rest('GET', `/1/cards/${card.id}/actions`, {
+                            filter: 'updateCard:idList',
+                            limit: 50
+                        });
+                        console.log('Got actions after auth:', actions);
+                    } catch (authError) {
+                        console.log('Authorization failed:', authError);
+                        
+                        // Method 3: Show message and basic info without history
+                        showError('Cannot access card movement history. This may require additional permissions or the card may not have moved between lists yet.');
+                        
+                        displayCardMetrics(card, {
+                            leadTimeDays: null,
+                            cycleTimeDays: null,
+                            isCompleted: config.doneLists.includes(card.idList),
+                            movements: []
+                        }, currentList);
+                        return;
+                    }
+                }
+                
+                if (!actions || actions.length === 0) {
+                    console.log('No actions found');
                     displayCardMetrics(card, {
                         leadTimeDays: null,
                         cycleTimeDays: null,

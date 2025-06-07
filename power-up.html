@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead & Cycle Time Metrics</title>
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .settings {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #0079bf;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #005a8b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading">
+            Loading...
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="settings" class="settings" style="display: none;">
+            <h3>Workflow Configuration</h3>
+            <p>Configure which lists represent different stages of your workflow:</p>
+            
+            <div class="form-group">
+                <label>Start Lists (where work enters the workflow):</label>
+                <select id="startLists" multiple size="3"></select>
+            </div>
+            
+            <div class="form-group">
+                <label>In Progress Lists (where active work happens):</label>
+                <select id="progressLists" multiple size="3"></select>
+            </div>
+            
+            <div class="form-group">
+                <label>Done Lists (where completed work goes):</label>
+                <select id="doneLists" multiple size="3"></select>
+            </div>
+            
+            <button id="saveSettingsBtn">Save Configuration</button>
+        </div>
+    </div>
+
+    <script>
+        let t = TrelloPowerUp.iframe();
+        
+        t.render(async function() {
+            try {
+                await loadSettings();
+            } catch (error) {
+                showError('Failed to load settings: ' + error.message);
+            }
+        });
+        
+        async function loadSettings() {
+            // Get board lists
+            const lists = await t.lists('id', 'name');
+            
+            // Get existing config
+            const config = await t.get('board', 'shared', 'workflowConfig', {});
+            
+            // Populate list dropdowns
+            populateListSelect('startLists', lists, config.startLists || []);
+            populateListSelect('progressLists', lists, config.progressLists || []);
+            populateListSelect('doneLists', lists, config.doneLists || []);
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('settings').style.display = 'block';
+        }
+        
+        function populateListSelect(selectId, lists, selectedIds) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '';
+            
+            lists.forEach(list => {
+                const option = document.createElement('option');
+                option.value = list.id;
+                option.textContent = list.name;
+                option.selected = selectedIds.includes(list.id);
+                select.appendChild(option);
+            });
+        }
+        
+        async function saveSettings() {
+            try {
+                const startLists = Array.from(document.getElementById('startLists').selectedOptions).map(o => o.value);
+                const progressLists = Array.from(document.getElementById('progressLists').selectedOptions).map(o => o.value);
+                const doneLists = Array.from(document.getElementById('doneLists').selectedOptions).map(o => o.value);
+                
+                const config = {
+                    startLists,
+                    progressLists,
+                    doneLists
+                };
+                
+                await t.set('board', 'shared', 'workflowConfig', config);
+                
+                // Close popup
+                t.closePopup();
+            } catch (error) {
+                showError('Failed to save settings: ' + error.message);
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+        });
+        
+        // Initialize iframe
+        TrelloPowerUp.iframe();
+    </script>
+</body>
+</html>

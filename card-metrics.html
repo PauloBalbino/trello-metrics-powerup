@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Metrics</title>
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metric-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .metric-value {
+            color: #666;
+        }
+        h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #0079bf;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        Loading card metrics...
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+    
+    <div id="content" style="display: none;">
+        <h3 id="cardName"></h3>
+        
+        <div class="metric-row">
+            <span class="metric-label">Lead Time:</span>
+            <span class="metric-value" id="leadTime">-</span>
+        </div>
+        
+        <div class="metric-row">
+            <span class="metric-label">Cycle Time:</span>
+            <span class="metric-value" id="cycleTime">-</span>
+        </div>
+        
+        <div class="metric-row">
+            <span class="metric-label">Status:</span>
+            <span class="metric-value" id="status">-</span>
+        </div>
+        
+        <div class="metric-row">
+            <span class="metric-label">Current List:</span>
+            <span class="metric-value" id="currentList">-</span>
+        </div>
+    </div>
+
+    <script>
+        let t = TrelloPowerUp.iframe();
+        
+        t.render(async function() {
+            try {
+                await loadCardMetrics();
+            } catch (error) {
+                showError('Failed to load card metrics: ' + error.message);
+            }
+        });
+        
+        async function loadCardMetrics() {
+            try {
+                // Get workflow config
+                const config = await t.get('board', 'shared', 'workflowConfig', {});
+                
+                if (!config.startLists || !config.doneLists) {
+                    showError('Please configure your workflow settings first from the board menu.');
+                    return;
+                }
+                
+                // Get card info
+                const card = await t.card('id', 'name', 'idList');
+                
+                // Get current list name
+                const lists = await t.lists('id', 'name');
+                const currentList = lists.find(l => l.id === card.idList);
+                
+                // Determine current status based on list position
+                let currentStatus = 'In Progress';
+                if (config.startLists && config.startLists.includes(card.idList)) {
+                    currentStatus = 'Not Started';
+                } else if (config.doneLists && config.doneLists.includes(card.idList)) {
+                    currentStatus = 'Completed';
+                }
+                
+                // Display basic card info (no historical data yet)
+                document.getElementById('cardName').textContent = card.name;
+                document.getElementById('leadTime').textContent = 'Not available yet';
+                document.getElementById('cycleTime').textContent = 'Not available yet';
+                document.getElementById('status').textContent = currentStatus;
+                document.getElementById('currentList').textContent = currentList ? currentList.name : 'Unknown';
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error in loadCardMetrics:', error);
+                showError('Failed to load card metrics: ' + error.message);
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // Initialize iframe
+        TrelloPowerUp.iframe();
+    </script>
+</body>
+</html>

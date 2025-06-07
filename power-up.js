@@ -83,10 +83,7 @@ TrelloPowerUp.initialize({
 async function calculateCardMetricsQuick(t, card, config) {
   try {
     // Get limited actions for performance
-    const actions = await t.card('id', card.id).get('actions', {
-      filter: 'updateCard:idList',
-      limit: 50
-    });
+    const actions = await t.get('card', 'shared', 'actions', []);
 
     if (!actions || actions.length === 0) {
       return { leadTimeDays: null, cycleTimeDays: null, isCompleted: false };

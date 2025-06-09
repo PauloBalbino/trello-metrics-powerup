@@ -89,9 +89,15 @@ window.TrelloPowerUp.initialize({
 
   // Authorization URL - where to send user to authorize  
   'authorize-url': function(t, options) {
-    return 'https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=' + 
-           encodeURIComponent('Lead & Cycle Time Metrics') + 
-           '&callback_method=postMessage';
+    return t.get('board', 'shared', 'apiKey').then(function(apiKey) {
+      if (!apiKey) {
+        throw new Error('API key not configured. Please configure your API key in the Power-Up settings.');
+      }
+      return 'https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=' + 
+             encodeURIComponent('Lead & Cycle Time Metrics') + 
+             '&key=' + apiKey + 
+             '&callback_method=postMessage';
+    });
   }
 });
 

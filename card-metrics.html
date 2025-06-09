@@ -234,19 +234,29 @@
             const authButton = document.createElement('button');
             authButton.textContent = 'Authorize to see timing data';
             authButton.style.margin = '10px 0';
-            authButton.onclick = function() {
+            authButton.onclick = async function() {
                 console.log('Starting authorization...');
-                t.authorize().then(function(token) {
+                try {
+                    // Get API key first
+                    const API_KEY = await t.get('board', 'shared', 'apiKey');
+                    if (!API_KEY) {
+                        showError('Please configure your API key in the Power-Up settings first.');
+                        return;
+                    }
+                    
+                    const authUrl = `https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=${encodeURIComponent('Lead & Cycle Time Metrics')}&key=${API_KEY}&callback_method=postMessage`;
+                    
+                    const token = await t.authorize(authUrl);
                     console.log('Authorization successful, token:', token);
+                    
                     // Store token and reload
-                    return t.set('member', 'private', 'token', token);
-                }).then(function() {
+                    await t.set('member', 'private', 'token', token);
                     console.log('Token stored, reloading...');
                     window.location.reload();
-                }).catch(function(error) {
+                } catch (error) {
                     console.error('Authorization failed:', error);
                     showError('Authorization failed: ' + error.message);
-                });
+                }
             };
             
             document.getElementById('content').appendChild(authButton);

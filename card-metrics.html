@@ -235,16 +235,17 @@
             authButton.textContent = 'Authorize to see timing data';
             authButton.style.margin = '10px 0';
             authButton.onclick = function() {
-                t.authorize({
-                    scope: { read: true }
-                }).then(function(token) {
+                console.log('Starting authorization...');
+                t.authorize().then(function(token) {
+                    console.log('Authorization successful, token:', token);
                     // Store token and reload
                     return t.set('member', 'private', 'token', token);
                 }).then(function() {
+                    console.log('Token stored, reloading...');
                     window.location.reload();
                 }).catch(function(error) {
                     console.error('Authorization failed:', error);
-                    showError('Authorization failed. Please try again.');
+                    showError('Authorization failed: ' + error.message);
                 });
             };
             

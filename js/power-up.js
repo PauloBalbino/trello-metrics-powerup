@@ -87,12 +87,11 @@ window.TrelloPowerUp.initialize({
       });
   },
 
-  // Authorization URL - where to send user to authorize
+  // Authorization URL - where to send user to authorize  
   'authorize-url': function(t, options) {
     return 'https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=' + 
            encodeURIComponent('Lead & Cycle Time Metrics') + 
-           '&callback_method=postMessage&return_url=' + 
-           encodeURIComponent(window.location.origin);
+           '&callback_method=postMessage';
   }
 });
 

@@ -78,7 +78,7 @@ window.TrelloPowerUp.initialize({
 
   // Authorization status - check if user has authorized
   'authorization-status': function(t, options) {
-    return t.get('member', 'private', 'token')
+    return t.get('member', 'private', 'authToken')
       .then(function(token) {
         return { authorized: !!token };
       })
@@ -86,6 +86,14 @@ window.TrelloPowerUp.initialize({
         return { authorized: false };
       });
   },
+
+  'show-authorization': function(t, options){
+  return t.popup({
+    title: 'Authorize 🥑 Account',
+    url: './auth.html',
+    height: 140,
+  });
+},
 
   // Authorization URL - where to send user to authorize  
   'authorize-url': function(t, options) {

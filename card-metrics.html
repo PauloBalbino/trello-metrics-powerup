@@ -109,8 +109,8 @@
                 let needsAuth = false;
                 
                 try {
-                    // Check if user is authorized
-                    const token = await t.get('member', 'private', 'token');
+                    // Check if user is authorized (following tutorial pattern)
+                    const token = await t.get('member', 'private', 'authToken');
                     
                     if (token) {
                         // User is authorized - get card actions
@@ -233,30 +233,15 @@
         function showAuthButton() {
             const authButton = document.createElement('button');
             authButton.textContent = 'Authorize to see timing data';
+            authButton.className = 'mod-primary';
             authButton.style.margin = '10px 0';
-            authButton.onclick = async function() {
-                console.log('Starting authorization...');
-                try {
-                    // Get API key first
-                    const API_KEY = await t.get('board', 'shared', 'apiKey');
-                    if (!API_KEY) {
-                        showError('Please configure your API key in the Power-Up settings first.');
-                        return;
-                    }
-                    
-                    const authUrl = `https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=${encodeURIComponent('Lead & Cycle Time Metrics')}&key=${API_KEY}&callback_method=postMessage`;
-                    
-                    const token = await t.authorize(authUrl);
-                    console.log('Authorization successful, token:', token);
-                    
-                    // Store token and reload
-                    await t.set('member', 'private', 'token', token);
-                    console.log('Token stored, reloading...');
-                    window.location.reload();
-                } catch (error) {
-                    console.error('Authorization failed:', error);
-                    showError('Authorization failed: ' + error.message);
-                }
+            authButton.onclick = function() {
+                // Use the show-authorization capability following the tutorial pattern
+                return t.popup({
+                    title: 'Authorize Lead & Cycle Time Metrics',
+                    url: './auth.html',
+                    height: 140
+                });
             };
             
             document.getElementById('content').appendChild(authButton);
